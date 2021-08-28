@@ -37,7 +37,7 @@ def main():
                 sample = st.file_uploader("Choose an sample image...")
                 if sample is not None:
                     image_s = Image.open(sample)
-                    image_s = image_s.resize((300,300))
+                    image_s = image_s.resize((500,500))
                     st.image(image_s, caption='Sample Image', width=300)
                 if sample is not None:
                     if st.button('Predict and Explain'):
