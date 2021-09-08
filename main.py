@@ -88,7 +88,7 @@ def get_params(seg_algo=None):
             0.01, 2.00, 0.5)
         min_size = st.sidebar.slider(
             'Minimum size',
-            0, 500, 50)
+            0, 2000, 50)
         params = [scale, sigma, min_size]
     elif seg_algo == 'Slic':
         n_segments = st.sidebar.slider(
@@ -163,7 +163,7 @@ def generate_maps(image_s, class_act, imp_thre, params,seg_algo=None):
                                       color=(intensity * (1 / count)).astype(int),
                                       mode='inner')
             if count > imp_thre * len(seg_list):
-                img = image_r
+                img = cv2.cvtColor(image_r, cv2.COLOR_BGR2RGB)
     img_mask = img / 255
     dst = cv2.addWeighted(image_s / 255, 0.6, img_mask, 0.4, 0)
     return dst, image_c
@@ -225,9 +225,7 @@ class GradCAM:
 def overlay_gradCAM(img, cam3):
     cam3 = np.uint8(255 * cam3)
     cam3 = cv2.applyColorMap(cam3, cv2.COLORMAP_JET)
-
     new_img = 0.3 * cam3 + 0.5 * img
-
     return cam3, (new_img * 255.0 / new_img.max()).astype("uint8")
 
 
@@ -235,7 +233,6 @@ def overlay_gradCAM(img, cam3):
 def guidedRelu(x):
     def grad(dy):
         return tf.cast(dy > 0, "float32") * tf.cast(x > 0, "float32") * dy
-
     return tf.nn.relu(x), grad
 
 
@@ -245,7 +242,6 @@ class GuidedBackprop:
         self.model = model
         self.layerName = layerName
         self.gbModel = self.build_guided_model()
-
         if self.layerName == None:
             self.layerName = self.find_target_layer()
 
@@ -273,11 +269,8 @@ class GuidedBackprop:
             inputs = tf.cast(images, tf.float32)
             tape.watch(inputs)
             outputs = self.gbModel(inputs)
-
         grads = tape.gradient(outputs, inputs)[0]
-
         saliency = cv2.resize(np.asarray(grads), upsample_size)
-
         return saliency
 
 
