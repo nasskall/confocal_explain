@@ -40,6 +40,7 @@ def main():
                     image_s = image_s.resize((500,500))
                     st.image(image_s, caption='Sample Image', width=300)
                 if sample is not None:
+                    heatmap=Image.open('colorscale_jet.jpg')
                     if st.button('Predict and Explain'):
                         with st.spinner("Explaining predictive model's results"):
                             image_s = np.array(image_s)
@@ -70,6 +71,8 @@ def main():
                                 with col_gcc1:
                                     st.subheader("Grad CAM and " + seg_algo)
                                     st.image(dst)
+                                    st.write('Importance colormap')
+                                    st.image(heatmap)
                                 st.success('Done')
                         if st.button(
                                 'Try again'):
@@ -158,11 +161,12 @@ def generate_maps(image_s, class_act, imp_thre, params,seg_algo=None):
                 intensity += int_value
                 count += 1
         if count != 0:
-            print((intensity * (1 / count)).astype(int))
+
+            print((intensity * (1 / count)).astype(int)[::-1])
             image_r = mark_boundaries(img, (segments == i).astype(int),
                                       background_label=0,
-                                      color=(intensity * (1 / count)).astype(int),
-                                      mode='inner')
+                                      color=(intensity * (1 / count)).astype(int)[::-1],
+                                      mode='thick')
             if count > imp_thre * len(seg_list):
                 img = image_r
     img_mask = img / 255
