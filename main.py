@@ -163,7 +163,7 @@ def generate_maps(image_s, class_act, imp_thre, params,seg_algo=None):
                                       color=(intensity * (1 / count)).astype(int),
                                       mode='inner')
             if count > imp_thre * len(seg_list):
-                img = cv2.cvtColor(image_r, cv2.COLOR_BGR2RGB)
+                img = cv2.cvtColor(image_r, cv2.COLOR_RGB2BGR)
     img_mask = img / 255
     dst = cv2.addWeighted(image_s / 255, 0.6, img_mask, 0.4, 0)
     return dst, image_c
