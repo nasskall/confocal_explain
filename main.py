@@ -158,6 +158,7 @@ def generate_maps(image_s, class_act, imp_thre, params,seg_algo=None):
                 intensity += int_value
                 count += 1
         if count != 0:
+            print((intensity * (1 / count)).astype(int))
             image_r = mark_boundaries(img, (segments == i).astype(int),
                                       background_label=0,
                                       color=(intensity * (1 / count)).astype(int),
