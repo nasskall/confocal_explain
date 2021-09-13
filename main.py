@@ -81,7 +81,7 @@ def main():
 def get_params(seg_algo=None):
     imp_threshold = st.sidebar.slider(
         'Importance threshold',
-        0.01, 1.0, 0.3)
+        0.01, 1.0, 0.55)
     if seg_algo == 'Felzenswalb':
         scale = st.sidebar.slider(
             'Scale',
@@ -133,9 +133,9 @@ def generate_maps(image_s, class_act, imp_thre, params,seg_algo=None):
     image_hsv = cv2.cvtColor(class_act, cv2.COLOR_RGB2HSV)
     # lower boundary RED color range values; Hue (0 - 10)
     lower1 = np.array([0, 100, 10])
-    upper1 = np.array([2, 255, 255])
+    upper1 = np.array([10, 255, 255])
     # upper boundary RED color range values; Hue (160 - 180)
-    lower2 = np.array([168, 100, 10])
+    lower2 = np.array([160, 100, 10])
     upper2 = np.array([180, 255, 255])
     lower_mask = cv2.inRange(image_hsv, lower1, upper1)
     upper_mask = cv2.inRange(image_hsv, lower2, upper2)
@@ -161,8 +161,6 @@ def generate_maps(image_s, class_act, imp_thre, params,seg_algo=None):
                 intensity += int_value
                 count += 1
         if count != 0:
-
-            print((intensity * (1 / count)).astype(int)[::-1])
             image_r = mark_boundaries(img, (segments == i).astype(int),
                                       background_label=0,
                                       color=(intensity * (1 / count)).astype(int)[::-1],
