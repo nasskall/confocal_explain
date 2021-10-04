@@ -51,6 +51,7 @@ def main():
                                                                              retrained_guidedBP,
                                                                              image_s,
                                                                              decode={1: "Malignant", 0: "Benign"})
+
                             output_image1 = Image.fromarray(new_img)
                             output_image2 = Image.fromarray(guidedcam_img)
                             dst, image_c = generate_maps(image_s, cam, imp_threshold, params, seg_algo)
@@ -121,6 +122,7 @@ def get_params(seg_algo=None):
 def generate_maps(image_s, class_act, imp_thre, params,seg_algo=None):
     if seg_algo == 'Felzenswalb':
         segments = felzenszwalb(image_s, scale=params[0], sigma=params[1], min_size=params[2])
+        st.image(segments)
         st.header(f"Felzenszwalb number of segments: {len(np.unique(segments))}")
     elif seg_algo == 'Slic':
         segments = slic(image_s, n_segments=params[0], compactness=params[1], sigma=params[2],
@@ -140,7 +142,7 @@ def generate_maps(image_s, class_act, imp_thre, params,seg_algo=None):
     lower_mask = cv2.inRange(image_hsv, lower1, upper1)
     upper_mask = cv2.inRange(image_hsv, lower2, upper2)
     full_mask = lower_mask + upper_mask;
-    hsv_threshold = cv2.bitwise_not(full_mask)
+    hsv_threshold = full_mask
     contours, hierarchy = cv2.findContours(hsv_threshold, cv2.RETR_EXTERNAL,
                                            cv2.CHAIN_APPROX_NONE)
     k = -1
@@ -170,6 +172,8 @@ def generate_maps(image_s, class_act, imp_thre, params,seg_algo=None):
     img_mask = img / 255
     dst = cv2.addWeighted(image_s / 255, 0.6, img_mask, 0.4, 0)
     return dst, image_c
+
+    pass
 
 
 class GradCAM:
