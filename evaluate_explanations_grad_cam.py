@@ -1,8 +1,10 @@
 import glob
 import math
 import os
+import random
 
 import matplotlib.pyplot as plt
+import pandas as pd
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras.models import Model
@@ -182,11 +184,15 @@ def calculate_decrease(img, patch, result):
     else:
         final_res = 0
     new_res = [res[0] == result[0], res[1][0][final_res]]
-    return img_array, new_res
+    return img_array, new_res, final_res
 
 
-total_results = []
-for image_path in glob.glob('resources/*/*/*.bmp')[0:100]:
+total_results_morf = []
+total_results_aopc = []
+image_path_list = glob.glob('resources/*/*/*.bmp')
+random.shuffle(image_path_list)
+for image_path in image_path_list[0:10]:
+    print(image_path)
     image_s = Image.open(image_path)
     image_s = image_s.resize((320, 320))
     model = tf.keras.models.load_model('models/vgg16_model')
@@ -198,15 +204,27 @@ for image_path in glob.glob('resources/*/*/*.bmp')[0:100]:
     sorted_initial = np.argsort(initial, axis=None)
     sorted_list_rev = sorted_initial.tolist()[::-1]
     img_arr = image_s
-    img_results = []
-    for tile in sorted_list_rev:
-        img_arr, new_resu = calculate_decrease(img_arr, tile, res)
-        if new_resu[0] == image_path.split('\\')[1]:
-            img_results.append(new_resu[1])
-    img_arr_res = np.array(img_results)
-    total_results.append(img_arr_res)
-total_results_arr = np.array(total_results)
-avg_results = np.average(total_results_arr, axis=0)
-print(avg_results)
-plt.plot(avg_results)
+    img_results_morf = []
+    img_results_aopc = []
+    if res[0]:
+        for tile in sorted_list_rev:
+            img_arr, new_resu,ind_c = calculate_decrease(img_arr, tile, res)
+            img_results_morf.append(new_resu[1])
+            img_results_aopc.append(res[1][0][ind_c] - new_resu[1])
+    img_arr_res_morf= np.array(img_results_morf)
+    img_arr_res_aopc = np.array(img_results_aopc)
+    total_results_morf.append(img_arr_res_morf)
+    total_results_aopc.append(img_arr_res_aopc)
+total_results_arr_morf = np.array(total_results_morf)
+total_results_arr_aopc = np.array(total_results_aopc)
+avg_results_morf = np.average(total_results_arr_morf, axis=0)
+morf = np.average(avg_results_morf)
+print(avg_results_morf.shape)
+avg_results_aopc = np.average(total_results_arr_aopc, axis=0)
+aopc = np.sum(avg_results_aopc)*1/(401)
+print(avg_results_aopc.shape)
+plt.plot(avg_results_morf[0:400])
+plt.plot(avg_results_aopc[0:400])
 plt.show()
+df_res = pd.DataFrame([avg_results_morf,avg_results_aopc])
+df_res.to_csv('df_res_quick_03_700.csv')

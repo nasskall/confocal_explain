@@ -1,11 +1,12 @@
 import glob
 import math
 import os
+import random
 
-import matplotlib.pyplot as plt
+import pandas as pd
 import tensorflow as tf
 import numpy as np
-from skimage.segmentation import felzenszwalb, mark_boundaries
+from skimage.segmentation import felzenszwalb, mark_boundaries, slic, quickshift
 from tensorflow.keras.models import Model
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras.applications.imagenet_utils import decode_predictions
@@ -166,14 +167,13 @@ def show_gradCAMs(model, gradCAM, GuidedBP, img, decode={}):
     guided_gradcam = cv2.cvtColor(guided_gradcam, cv2.COLOR_BGR2RGB)
     return class_act, initial, new_img, guided_gradcam, res
 
+
 def calculate_decrease(img, segments, seg_place, result):
     inter_pixels = np.where(segments == seg_place)
     inter_pixel_list = list(zip(inter_pixels[0], inter_pixels[1]))
     img_array = np.array(img)
     for pix in inter_pixel_list:
         img_array[pix[0], pix[1]] = np.random.normal(127, 127, 3)
-    plt.matshow(img)
-    plt.show()
     im = img_to_array(img)
     x = np.expand_dims(im, axis=0)
     x = preprocess_input(x)
@@ -189,11 +189,14 @@ def calculate_decrease(img, segments, seg_place, result):
     else:
         final_res = 0
     new_res = [res[0] == result[0], res[1][0][final_res]]
-    return img_array, new_res
+    return img_array, new_res, final_res
 
 
-total_results = []
-for image_path in glob.glob('resources/*/*/*.bmp')[0:3]:
+total_results_morf = []
+total_results_aopc = []
+image_path_list = glob.glob('resources/*/*/*.bmp')
+random.shuffle(image_path_list)
+for image_path in image_path_list:
     print(image_path)
     image_s = Image.open(image_path)
     image_s = image_s.resize((320, 320))
@@ -204,7 +207,10 @@ for image_path in glob.glob('resources/*/*/*.bmp')[0:3]:
     cls_act, initial, new_img, guidedcam_img, res = show_gradCAMs(model, retrained_gradCAM, retrained_guidedBP,
                                                                   np.array(image_s),
                                                                   decode={1: "Malignant", 0: "Benign"})
-    segments = felzenszwalb(image_s, 100, 0.5, 50)
+    #segments = slic(image_s, n_segments=250, compactness=10, sigma=1,
+    #                    start_label=1, slic_zero=True)
+    #segments = felzenszwalb(image_s, scale=100,sigma=0.5,min_size=50)
+    segments = quickshift(image_s, kernel_size=3, max_dist=6, ratio=0.5)
     imp_thre = 0.55
     image_hsv = cv2.cvtColor(cls_act, cv2.COLOR_RGB2HSV)
     # lower boundary RED color range values; Hue (0 - 10)
@@ -235,17 +241,30 @@ for image_path in glob.glob('resources/*/*/*.bmp')[0:3]:
             intensities.append(0)
     sorted_int = np.argsort(intensities, axis=None)
     sorted_list_rev = sorted_int.tolist()[::-1]
-    #print(list(zip(np.where(segments==sorted_list_rev[0])[0], np.where(segments==sorted_list_rev[0])[1])))
     img_arr = image_s
-    img_results = []
-    if res[0] == image_path.split('\\')[1]:
+    img_results_morf = []
+    img_results_aopc = []
+    if res[0]:
         for seg in sorted_list_rev:
-            img_arr, new_resu = calculate_decrease(img_arr, segments, seg, res)
-            img_results.append(new_resu[1])
-        img_arr_res = np.array(img_results)
-    total_results.append(img_arr_res)
-total_results_arr = np.array(total_results)
-avg_results = np.average(total_results_arr, axis=0)
-print(avg_results)
-plt.plot(avg_results)
+            img_arr, new_resu, ind_c = calculate_decrease(img_arr, segments, seg, res)
+            img_results_morf.append(new_resu[1])
+            img_results_aopc.append(res[1][0][ind_c]-new_resu[1])
+    img_arr_res_morf = np.array(img_results_morf)
+    img_arr_res_aopc = np.array(img_results_aopc)
+    img_arr_padded_morf = np.pad(img_arr_res_morf, (0, (700 - len(img_arr_res_morf))), 'constant', constant_values=(0, 0))
+    img_arr_padded_aopc = np.pad(img_arr_res_aopc, (0, (700 - len(img_arr_res_morf))), 'constant', constant_values=(0, 0))
+    total_results_morf.append(img_arr_padded_morf)
+    total_results_aopc.append(img_arr_padded_aopc)
+total_results_arr_morf = np.array(total_results_morf)
+total_results_arr_aopc = np.array(total_results_aopc)
+avg_results_morf = np.average(total_results_arr_morf, axis=0)
+morf = np.average(avg_results_morf)
+print(avg_results_morf)
+avg_results_aopc = np.average(total_results_arr_aopc, axis=0)
+aopc = np.sum(avg_results_aopc)*1/(401)
+print(avg_results_aopc)
+plt.plot(avg_results_morf[0:400])
+plt.plot(avg_results_aopc[0:400])
 plt.show()
+df_res = pd.DataFrame([avg_results_morf, avg_results_aopc])
+df_res.to_csv('df_res_quick_03_700.csv')
