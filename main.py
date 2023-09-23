@@ -1,27 +1,25 @@
 # This is a sample Python script.
 import cv2
-from tensorflow.keras import backend as K
+import pyautogui as pyautogui
+import tensorflow as tf
+from keras import models, Model
+from keras.src import backend
+from keras.src.applications.vgg16 import preprocess_input, decode_predictions
+from tensorflow import keras
 import os
 import random
-from tensorflow.keras.preprocessing.image import load_img, img_to_array
-from tensorflow.keras.applications.imagenet_utils import decode_predictions
-from tensorflow.keras.applications.vgg16 import preprocess_input
 import streamlit as st
 import numpy as np
 from PIL import Image
-import tensorflow as tf
-from tensorflow.keras.models import Model
 from skimage.color import rgb2gray
 from skimage.filters import sobel
 from skimage.segmentation import felzenszwalb, slic, quickshift, watershed
 from skimage.segmentation import mark_boundaries
-from utils import SessionState  # Assuming SessionState.py lives on this folder
 
-session = SessionState.get(run_id=0)
 
-@st.cache(allow_output_mutation=True)
+
 def load_model():
-    model = tf.keras.models.load_model('models/vgg16_model')
+    model = models.load_model('models/vgg16_model')
     return model
 
 def main():
@@ -77,7 +75,7 @@ def main():
                                 st.success('Done')
                         if st.button(
                                 'Try again'):
-                            session.run_id += 1
+                            pyautogui.hotkey("ctrl", "F5")
 
 def get_params(seg_algo=None):
     imp_threshold = st.sidebar.slider(
@@ -287,7 +285,7 @@ def deprocess_image(x):
     # normalize tensor: center on 0., ensure std is 0.25
     x = x.copy()
     x -= x.mean()
-    x /= (x.std() + K.epsilon())
+    x /= (x.std() + backend.epsilon())
     x *= 0.25
 
     # clip to [0, 1]
@@ -296,7 +294,7 @@ def deprocess_image(x):
 
     # convert to RGB array
     x *= 255
-    if K.image_data_format() == 'channels_first':
+    if backend.image_data_format() == 'channels_first':
         x = x.transpose((1, 2, 0))
     x = np.clip(x, 0, 255).astype('uint8')
     return x
@@ -308,7 +306,7 @@ def show_gradCAMs(model, gradCAM, GuidedBP, img, decode={}):
     """
 
     upsample_size = (img.shape[1], img.shape[0])
-    im = img_to_array(img)
+    im = tf.keras.utils.img_to_array(img)
     x = np.expand_dims(im, axis=0)
     x = preprocess_input(x)
     preds = model.predict(x)
