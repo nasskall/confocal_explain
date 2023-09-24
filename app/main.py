@@ -13,7 +13,7 @@ from skimage.segmentation import mark_boundaries
 
 
 def load_model():
-    model = models.load_model('models/vgg16_model')
+    model = models.load_model('./models/vgg16_model')
     return model
 
 def main():
@@ -32,7 +32,7 @@ def main():
                     image_s = image_s.resize((300,300))
                     st.image(image_s, caption='Sample Image', width=300)
                 if sample is not None:
-                    heatmap=Image.open('colorscale_jet.jpg')
+                    heatmap=Image.open('./colorscale_jet.jpg')
                     if st.button('Predict and Explain'):
                         with st.spinner("Explaining predictive model's results"):
                             image_s = np.array(image_s)
