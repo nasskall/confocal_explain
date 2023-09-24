@@ -30,7 +30,7 @@ def main():
                 st.title("VGG16 and " + seg_algo)
                 st.sidebar.write('You selected VGG16 and ' + seg_algo)
                 # Add a slider to the sidebar:
-                imp_threshold,params = get_params(seg_algo)
+                imp_threshold, params = get_params(seg_algo)
                 sample = st.file_uploader("Choose an sample image...")
                 if sample is not None:
                     image_s = Image.open(sample)
@@ -74,7 +74,7 @@ def main():
                                 st.success('Done')
                         if st.button(
                                 'Try again'):
-                            st.experimental_rerun()
+                            st.rerun()
 
 def get_params(seg_algo=None):
     imp_threshold = st.sidebar.slider(
