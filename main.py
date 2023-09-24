@@ -4,14 +4,9 @@ import tensorflow as tf
 from keras import models, Model
 from keras.src import backend
 from keras.src.applications.vgg16 import preprocess_input, decode_predictions
-from tensorflow import keras
-import os
-import random
 import streamlit as st
 import numpy as np
 from PIL import Image
-from skimage.color import rgb2gray
-from skimage.filters import sobel
 from skimage.segmentation import felzenszwalb, slic, quickshift, watershed
 from skimage.segmentation import mark_boundaries
 
