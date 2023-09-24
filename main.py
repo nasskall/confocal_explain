@@ -1,6 +1,5 @@
 # This is a sample Python script.
 import cv2
-import pyautogui as pyautogui
 import tensorflow as tf
 from keras import models, Model
 from keras.src import backend
@@ -75,7 +74,7 @@ def main():
                                 st.success('Done')
                         if st.button(
                                 'Try again'):
-                            pyautogui.hotkey("ctrl", "F5")
+                            st.experimental_rerun()
 
 def get_params(seg_algo=None):
     imp_threshold = st.sidebar.slider(
